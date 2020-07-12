@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block title %}Django Dashbaord{% endblock %}</title>
+  </head>
+  <body>
+    <header>
+      <h1>Ableton Challenge Dashbaord</h1>
+        <a href="{% url 'signup' %}">signup</a>
+
+      <hr>
+    </header>
+    <main>
+      {% block content %}
+      {% endblock %}
+    </main>
+  </body>
+</html>

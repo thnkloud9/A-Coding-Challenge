@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+venv
+django_solution/db.sqlite3
+stdlib_solution/sqlite.db
+stdlib_solution/test_sqlite.db
