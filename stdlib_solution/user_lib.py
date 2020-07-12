@@ -36,7 +36,7 @@ def verify_password(stored_password, provided_password):
 
 
 def user_signup(conn, user):
-    """Create a new project into the projects table
+    """Create a new user into the users table
     :param conn:
     :param user: dict
     :return: user id
