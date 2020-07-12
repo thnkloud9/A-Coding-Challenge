@@ -14,7 +14,7 @@ will contain a link that needs to be clicked on in order to activate the account
 Sending an actual email or routing the request when the user clicks on the activation
 link is not part of the task.
 
-##Authentication
+## Authentication
 
 Users enter their email address and password to log in. The account will be locked
 automatically for a certain period of time after repeated attempts at logging in with an
