@@ -2,10 +2,18 @@ import secrets
 import hashlib
 import os
 import binascii
+import settings
 from datetime import datetime
 from sqlite3 import Error
 from db_utils import create_connection, create_table
 
+
+def log(e):
+    """Log errors (currently just prints)
+    :param e: string
+    """
+    if settings.DEBUG is True:
+        print(e)
 
 def hash_password(password):
     """Hash a password for storing.
@@ -34,10 +42,33 @@ def verify_password(stored_password, provided_password):
     pwdhash = binascii.hexlify(pwdhash).decode('ascii')
     return pwdhash == stored_password
 
+def user_find_by_email(email, settings=settings):
+    """Get user data by email
+    :param: email: string
+    :return: results
+    """
+    find_user_sql = '''SELECT * FROM users
+        WHERE email = ?
+        '''
+    try:
+        conn = create_connection(settings.DATABASE)
+        cur = conn.cursor()
+        cur.execute(find_user_sql, [email])
+        user = cur.fetchone()
+        cur.close()
+    except Error as e:
+        log(e)
+        result = None
+    else:
+        result = user
+    finally:
+        if (conn):
+            conn.close()
 
-def user_signup(conn, user):
-    """Create a new user into the users table
-    :param conn:
+    return result 
+
+def user_signup(user, settings=settings):
+    """Create a new user in the users table
     :param user: dict
     :return: user id
     """
@@ -45,6 +76,7 @@ def user_signup(conn, user):
     sql = ''' INSERT INTO users(name,email,password,is_active,login_attempts,last_login_attempt,token)
         VALUES(?,?,?,?,?,?,?) '''
     try:
+        conn = create_connection(settings.DATABASE)
         cur = conn.cursor()
         cur.execute(sql, (
             user['name'],
@@ -55,71 +87,62 @@ def user_signup(conn, user):
             None,
             token
         ))
+        conn.commit()
         cur.close()
 
-        return cur.lastrowid
     except Error as e:
-        print(e)
+        log(e)
+        result = None
+    else:
+        result = user_find_by_email(user['email']) 
+    finally:
+        if (conn):
+            conn.close()
+
+    return result
 
 
-def user_activate(conn, user_id, token):
-    """Create a new task
-    :param conn:
+
+def user_activate(user_id, token, settings=settings):
+    """Activate a user with a passed user id and token
     :param user_id:
     :param token:
     :return: user id
     """
-
     sql = '''
         UPDATE users SET is_active = 1
         WHERE token = ? AND id = ?
         '''
     try:
+        conn = create_connection(settings.DATABASE)
         cur = conn.cursor()
         cur.execute(sql, (token, user_id))
-        result = cur.lastrowid
+        conn.commit()
         cur.close()
     except Error as e:
-        print(e)
-
+        log(e)
+        result = False
+    else:
+        result = True
+    finally:
+        if (conn):
+            conn.close()
     return result
 
-
-def user_find_by_email(conn, email):
-    """Get user data by email
-    :param: conn: Connection object
-    :param: email: string
-    :return: results
-    """
-    currtime = datetime.now()
-    find_user_sql = '''SELECT * FROM users
-        WHERE email = ?
-        '''
-    try:
-        cur = conn.cursor()
-        cur.execute(find_user_sql, [email])
-        results = cur.fetchone()
-
-    except Error as e:
-        print(e)
-
-    return results
-
-
-def user_login(conn, email, password):
+def user_login(email, password, settings=settings):
     """Login a user with email and password
-    :param: conn: Connection object
     :param: email: string
     :param: password: string
     :return: user:
     """
     currtime = datetime.now()
-    user = user_find_by_email(conn, email)
+    user = user_find_by_email(email)
 
     if not user:
         return None
 
     try:
+        conn = create_connection(settings.DATABASE)
         cur = conn.cursor()
         if not verify_password(user[3], password):
             # password does not match!
@@ -135,6 +158,7 @@ def user_login(conn, email, password):
                 currtime,
                 email
             ])
+            conn.commit()
             cur.close()
 
             return None
@@ -167,11 +191,17 @@ def user_login(conn, email, password):
                 currtime,
                 email
             ])
+            conn.commit()
             cur.close()
 
-            user = user_find_by_email(conn, email)
+            user = user_find_by_email(email)
 
     except Error as e:
-        print(e)
-
+        log(e)
+        result = None 
+    else:
+        result = user
+    finally:
+        if (conn):
+            conn.close()
     return user

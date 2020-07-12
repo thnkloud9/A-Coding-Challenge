@@ -1,11 +1,13 @@
+import settings
 from db_utils import create_connection, create_table
 from sqlite3 import Error
 
 
-def main(database='sqlite.db'):
+def main(settings=settings):
     """
     Creates sqlite database and users table
     """
+    database = settings.DATABASE
     sql_create_users_table = """CREATE TABLE IF NOT EXISTS users (
        id integer PRIMARY KEY,
        name text NOT NULL,
@@ -26,6 +28,8 @@ def main(database='sqlite.db'):
             create_table(conn, sql_create_users_table)
         except Error as e:
             print(e)
+        finally:
+            conn.close()
 
     else:
         print('Error! could not create database connection')
